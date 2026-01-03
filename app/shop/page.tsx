@@ -2,29 +2,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShoppingBag, Star, ShieldCheck, Leaf, ShoppingCart, X } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Star, ShieldCheck, Leaf, ShoppingCart, X, Sun, Moon, Globe } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 export default function ShopPage() {
-  const [cart, setCart] = useState<number[]>([]);
+  const { lang, setLang, isDark, toggleTheme, theme, t, products, cart, addToCart, removeFromCart } = useApp();
   const [showCartDropdown, setShowCartDropdown] = useState(false);
   const router = useRouter();
-
-  // Curated product list
-  const products = [
-    { id: 2, name: "Copper Spray", price: 420, category: "Blight Cure", image: "https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?auto=format&fit=crop&q=80&w=600" },
-    { id: 3, name: "Organic Fertilizer", price: 650, category: "Growth", image: "https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&q=80&w=600" },
-    { id: 7, name: "Leaf Shine Spray", price: 250, category: "Aesthetic", image: "https://images.unsplash.com/photo-1598512752271-33f913a5af13?auto=format&fit=crop&q=80&w=600" },
-    { id: 8, name: "Hydrated Lime", price: 190, category: "Soil pH", image: "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&q=80&w=600" },
-    { id: 9, name: "Potassium Soap", price: 340, category: "Soft Pests", image: "https://images.unsplash.com/photo-1611843467160-25afb8df1074?auto=format&fit=crop&q=80&w=600" },
-  ];
-
-  const addToCart = (id: number) => {
-    setCart(prev => [...prev, id]);
-  };
-
-  const removeFromCart = (indexToRemove: number) => {
-    setCart(prev => prev.filter((_, index) => index !== indexToRemove));
-  };
 
   const cartTotal = cart.reduce((total, id) => {
     const product = products.find(p => p.id === id);
@@ -32,8 +16,8 @@ export default function ShopPage() {
   }, 0);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', width: '100%' }}>
-      
+    <div style={{ position: 'relative', minHeight: '100vh', width: '100%', color: theme.text }}>
+
       {/* 1. BACKGROUND IMAGE LAYER */}
       <div style={{
         position: 'fixed',
@@ -55,36 +39,49 @@ export default function ShopPage() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: 'rgba(253, 252, 251, 0.9)',
+        backgroundColor: isDark ? 'rgba(12, 12, 12, 0.95)' : 'rgba(253, 252, 251, 0.9)',
         zIndex: -1
       }} />
 
+      {/* TOP CONTROLS (Using Home Page Style Capsule) */}
+      <div className="glass-panel" style={{ position: 'fixed', top: '30px', right: '30px', padding: '10px 20px', borderRadius: '50px', display: 'flex', gap: '15px', alignItems: 'center', zIndex: 999, background: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.85)', border: `1px solid ${theme.border}` }}>
+        <button onClick={toggleTheme} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.text, padding: '5px', display: 'flex' }}>
+          {isDark ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        <div style={{ width: '1px', height: '20px', backgroundColor: theme.border }} />
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button onClick={() => setLang('EN')} style={{ background: 'none', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: lang === 'EN' ? 'bold' : 'normal', color: lang === 'EN' ? theme.accent : theme.subtext }}>EN</button>
+          <button onClick={() => setLang('HI')} style={{ background: 'none', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: lang === 'HI' ? 'bold' : 'normal', color: lang === 'HI' ? theme.accent : theme.subtext }}>HI</button>
+        </div>
+      </div>
+
       {/* 3. CONTENT LAYER */}
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        fontFamily: 'serif', 
-        padding: '40px 20px', 
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        fontFamily: 'serif',
+        padding: '40px 20px',
         minHeight: '100vh',
         position: 'relative',
         zIndex: 1
       }}>
-        
+
         {/* Header Section */}
         <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-          <Link href="/" style={{ color: '#4A6741', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600' }}>
-            <ArrowLeft size={18} /> Back to Home
+          <Link href="/" style={{ color: theme.accent, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600' }}>
+            <ArrowLeft size={18} /> {t('backHomeFull')}
           </Link>
-          
-          <div style={{ position: 'relative' }}>
-            <button 
+
+          <div style={{ position: 'fixed', bottom: '40px', right: '40px', zIndex: 1000 }}>
+            <button
               onClick={() => setShowCartDropdown(!showCartDropdown)}
-              style={{ background: 'white', border: '1px solid #eee', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '50px', height: '50px', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              className="hover-scale"
+              style={{ background: theme.accent, border: `none`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '65px', height: '65px', borderRadius: '50%', boxShadow: '0 10px 30px rgba(45, 74, 35, 0.4)', color: 'white' }}>
               <div style={{ position: 'relative' }}>
-                <ShoppingCart size={24} color="#1A1C19" />
+                <ShoppingCart size={28} color="white" />
                 {cart.length > 0 && (
-                  <span style={{ position: 'absolute', top: '-12px', right: '-12px', backgroundColor: '#2D4A23', color: 'white', borderRadius: '50%', width: '20px', height: '20px', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                  <span style={{ position: 'absolute', top: '-8px', right: '-8px', backgroundColor: '#E74C3C', color: 'white', borderRadius: '50%', width: '22px', height: '22px', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white', fontWeight: 'bold' }}>
                     {cart.length}
                   </span>
                 )}
@@ -92,35 +89,41 @@ export default function ShopPage() {
             </button>
 
             {showCartDropdown && (
-              <div style={{ position: 'absolute', right: 0, top: '60px', width: '320px', backgroundColor: 'white', borderRadius: '25px', boxShadow: '0 20px 50px rgba(0,0,0,0.15)', padding: '25px', zIndex: 100, border: '1px solid #f0f0f0' }}>
-                <h4 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#1A1C19' }}>Your Basket</h4>
+              <div style={{ position: 'absolute', right: 0, bottom: '80px', width: '340px', backgroundColor: theme.card, borderRadius: '25px', boxShadow: '0 20px 50px rgba(0,0,0,0.25)', padding: '25px', zIndex: 100, border: `1px solid ${theme.border}`, animation: 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+                <h4 style={{ margin: '0 0 20px 0', fontSize: '18px', color: theme.text, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {t('basketTitle')}
+                  <button onClick={() => setShowCartDropdown(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.subtext }}><X size={18} /></button>
+                </h4>
                 {cart.length === 0 ? (
-                  <p style={{ fontSize: '14px', color: '#999', textAlign: 'center', padding: '20px 0' }}>Your basket is currently empty.</p>
+                  <p style={{ fontSize: '14px', color: theme.subtext, textAlign: 'center', padding: '20px 0' }}>{t('basketEmpty')}</p>
                 ) : (
                   <>
-                    <div style={{ maxHeight: '250px', overflowY: 'auto', marginBottom: '20px' }}>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
                       {cart.map((id, index) => {
                         const item = products.find(p => p.id === id);
                         return (
-                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f9f9f9' }}>
-                            <div>
-                              <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#1A1C19' }}>{item?.name}</p>
-                              <p style={{ margin: 0, fontSize: '12px', color: '#4A6741' }}>₹{item?.price}</p>
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${theme.border}` }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundImage: `url(${item?.image})`, backgroundSize: 'cover' }} />
+                              <div>
+                                <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: theme.text }}>{item?.name}</p>
+                                <p style={{ margin: 0, fontSize: '12px', color: theme.accent }}>₹{item?.price}</p>
+                              </div>
                             </div>
-                            <button onClick={() => removeFromCart(index)} style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer' }}><X size={14} /></button>
+                            <button onClick={() => removeFromCart(index)} style={{ background: 'none', border: 'none', color: theme.subtext, cursor: 'pointer' }}><X size={16} /></button>
                           </div>
                         );
                       })}
                     </div>
-                    <div style={{ borderTop: '2px solid #f0f0f0', paddingTop: '15px', marginBottom: '20px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px', color: '#1A1C19' }}>
-                        <span>Total Amount</span>
-                        <span style={{ color: '#2D4A23' }}>₹{cartTotal}</span>
+                    <div style={{ borderTop: `2px solid ${theme.border}`, paddingTop: '15px', marginBottom: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', color: theme.text }}>
+                        <span>{t('totalAmount')}</span>
+                        <span style={{ color: theme.accent }}>₹{cartTotal}</span>
                       </div>
                     </div>
                     <Link href="/checkout" style={{ textDecoration: 'none' }}>
-                      <button style={{ width: '100%', backgroundColor: '#2D4A23', color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: '600', cursor: 'pointer', fontSize: '15px' }}>
-                        Proceed to Checkout
+                      <button style={{ width: '100%', backgroundColor: theme.accent, color: 'white', border: 'none', padding: '18px', borderRadius: '15px', fontWeight: '600', cursor: 'pointer', fontSize: '16px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}>
+                        {t('checkoutBtn')}
                       </button>
                     </Link>
                   </>
@@ -130,31 +133,49 @@ export default function ShopPage() {
           </div>
         </div>
 
-        <h1 style={{ fontSize: '42px', color: '#1A1C19', marginBottom: '40px', fontWeight: '600' }}>Organic Cure Shop</h1>
+        <h1 style={{ fontSize: '42px', color: theme.text, marginBottom: '10px', fontWeight: '600' }}>{t('shopTitle')}</h1>
+        <p style={{ color: theme.subtext, marginBottom: '50px', fontSize: '18px' }}>{t('shopDesc')}</p>
 
         {/* Product Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', width: '100%', maxWidth: '1100px' }}>
+        <div key={lang} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '40px', width: '100%', maxWidth: '1200px' }}>
           {products.map((p) => (
-            <div key={p.id} style={{ backgroundColor: 'white', borderRadius: '40px', overflow: 'hidden', border: '1px solid #f2f2f2', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: '100%', height: '240px' }}>
-                <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-              <div style={{ padding: '25px' }}>
-                <span style={{ fontSize: '10px', color: '#4A6741', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>{p.category}</span>
-                <div style={{ display: 'flex', justifyContent: 'space-between', margin: '12px 0' }}>
-                  <h3 style={{ margin: 0, fontSize: '19px', color: '#1A1C19' }}>{p.name}</h3>
-                  <span style={{ fontWeight: 'bold', color: '#1A1C19' }}>₹{p.price}</span>
+            <div key={p.id} className="product-card" style={{
+              backgroundColor: theme.card, borderRadius: '30px', overflow: 'hidden', border: `1px solid ${theme.border}`,
+              display: 'flex', flexDirection: 'column', transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              position: 'relative'
+            }}>
+              {/* Image Container with Hover Zoom Effect */}
+              <div style={{ width: '100%', height: '280px', overflow: 'hidden', position: 'relative' }}>
+                <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                />
+                <div style={{ position: 'absolute', top: '15px', right: '15px', padding: '5px 12px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', borderRadius: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: '#1A1C19' }}>
+                  {p.category}
                 </div>
-                <button onClick={() => addToCart(p.id)} style={{ width: '100%', backgroundColor: '#2D4A23', color: 'white', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '600', cursor: 'pointer', transition: 'opacity 0.2s' }}>
-                  Add to Basket
-                </button>
+              </div>
+
+              {/* Product Details */}
+              <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: theme.text, lineHeight: '1.3' }}>{p.name}</h3>
+                  <span style={{ fontSize: '16px', fontWeight: 'bold', color: theme.accent, whiteSpace: 'nowrap' }}>₹{p.price}</span>
+                </div>
+
+                <div style={{ marginTop: 'auto', paddingTop: '15px' }}>
+                  <button onClick={() => addToCart(p.id)} style={{
+                    width: '100%', padding: '15px', borderRadius: '15px', border: 'none', backgroundColor: theme.accent, color: 'white', fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(74, 103, 65, 0.2)'
+                  }}>
+                    <ShoppingBag size={16} /> {t('addToBasket')}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '80px', color: '#B2B9B0', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
-          Nivara Botanical Shop Terminal
+        <footer style={{ marginTop: 'auto', paddingTop: '80px', color: theme.subtext, fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          {t('shopFooter')}
         </footer>
       </div>
     </div>
